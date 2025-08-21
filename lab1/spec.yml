@@ -22,7 +22,6 @@ language_name: Simple
 
 # Reversal: taking any string expression and producing a new string with the same characters in the reversed order
 # -r
-# It will reverse anything in reverse and store is in reverse
 
 
 #Input: reading a single line of text from the console as a string in your program
@@ -37,10 +36,8 @@ language_name: Simple
 
 
 #Comments: a way to write notes in English which appear in your source code but do not affect the program meaning in any way
-# nested commenteds
-# $ Hello my name it 
-#   $ My inner comments $
-# $
+# $ This is a comment $
+# $ This is another comment
 
 
 example_program: |
@@ -49,7 +46,7 @@ example_program: |
             -d:"Hello World Part2"
         $
     $
-    command -d:-i -r -c:"World"
+    command -d: -c:"World" -r -i
 
 example_input_1: |
     # Hello
@@ -65,19 +62,10 @@ example_output_2: |
 
 
 # Task 3
-# Language_suntax explanation
-# An ordinary character is any single character will be a double quote ""
-#
-#
-
-
-
-
-
-
 language_syntax: |
-    BLAH BLAH
-    BLAH BLAH
+    # An ordinary character is any single character will be a double quote ""
+    # Each code will start with command so that the interpreter can know when the code is finished
+    #  
 
 language_semantics: |
     BLAH BLAH
