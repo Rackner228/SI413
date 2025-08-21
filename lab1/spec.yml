@@ -1,37 +1,79 @@
 # SI413 Lab 1.1: Spec for Just Strings language
 
-your_name: BLAH BLAH
+your_name: Richard Kang
 
-your_alpha: BLAH
+your_alpha: m263222
 
 used_ai: Y # remember to turn in an aichat.md file as well
 
 
 # Task 1
 
-language_name: BLAH
+language_name: Simple
 
 
-# Task 2
+
+# String literals: a literal sequence of zero or more of the 97 ASCII characters that your program source code may contain.
+
+
+# Concatenation: combining two (or more) string expressions into a single string, one after the other
+# -c:"World"
+# It will combine a word together and store it in word1
+
+# Reversal: taking any string expression and producing a new string with the same characters in the reversed order
+# -r
+# It will reverse anything in reverse and store is in reverse
+
+
+#Input: reading a single line of text from the console as a string in your program
+# -i
+# it will store it in the input
+
+
+
+# Print: displaying any string expression to the screen
+# -d
+
+
+
+#Comments: a way to write notes in English which appear in your source code but do not affect the program meaning in any way
+# nested commenteds
+# $ Hello my name it 
+#   $ My inner comments $
+# $
+
 
 example_program: |
-    BLAH BLAH
-    BLAH BLAH
+    $ Hello I am performing a nested commenteds
+        $ This is a second comment within the comment and won't screw up the code 
+            -d:"Hello World Part2"
+        $
+    $
+    command -d:-i -r -c:"World"
 
 example_input_1: |
-    BLAH BLAH
+    # Hello
 
 example_output_1: |
-    BLAH BLAH
+    # olleH World is cool
 
 example_input_2: |
-    BLAH BLAH
+    # Minecraft
 
 example_output_2: |
-    BLAH BLAH
+    # tfarceniM World is cool
 
 
 # Task 3
+# Language_suntax explanation
+# An ordinary character is any single character will be a double quote ""
+#
+#
+
+
+
+
+
 
 language_syntax: |
     BLAH BLAH
