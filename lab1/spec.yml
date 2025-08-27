@@ -46,7 +46,7 @@ example_program: |
             -d:"Hello World Part2"
         $
     $
-    command -d: -c:"World" -r -i
+    command -d -c:"World" -r -i
 
 example_input_1: |
     # Hello
