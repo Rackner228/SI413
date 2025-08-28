@@ -1,84 +1,103 @@
 # SI413 Lab 1.1: Spec for Just Strings language
 
+
 your_name: Richard Kang
 
+
 your_alpha: m263222
+
 
 used_ai: Y # remember to turn in an aichat.md file as well
 
 
-# Task 1
 
+
+# Task 1
 language_name: Simple
 
 
-
-# String literals: a literal sequence of zero or more of the 97 ASCII characters that your program source code may contain.
-
-
-# Concatenation: combining two (or more) string expressions into a single string, one after the other
-# -c:"World"
-# It will combine a word together and store it in word1
-
-# Reversal: taking any string expression and producing a new string with the same characters in the reversed order
-# -r
-
-
-#Input: reading a single line of text from the console as a string in your program
-# -i
-# it will store it in the input
-
-
-
-# Print: displaying any string expression to the screen
-# -d
-
-
-
-#Comments: a way to write notes in English which appear in your source code but do not affect the program meaning in any way
-# $ This is a comment $
-# $ This is another comment
-
-
 example_program: |
-    $ Hello I am performing a nested commenteds
-        $ This is a second comment within the comment and won't screw up the code 
-            -d:"Hello World Part2"
-        $
-    $
-    command -d -c:"World" -r -i
+   $ Hello I am performing a nested commenteds
+       $ This is a second comment within the comment and won't screw up the code
+           -d:"Hello World Part2"
+       $
+   $
+   command -i -r -c:"World is cool" -d
+
 
 example_input_1: |
-    # Hello
+   # Hello
+
 
 example_output_1: |
-    # olleH World is cool
+   # olleH World is cool
+
 
 example_input_2: |
-    # Minecraft
+   # Minecraft
+
 
 example_output_2: |
-    # tfarceniM World is cool
+   # tfarceniM World is cool
 
 
 # Task 3
 language_syntax: |
-    # An ordinary character is any single character will be a double quote ""
-    # Each code will start with command so that the interpreter can know when the code is finished
-    #  
+   A string literal is a double-quote character ", followed by
+   a sequence of ordinary characters and escape sequences, followed by
+   another double quote character.
+  
+   Any space, tab, or newlines will be treated as whitespace, unless if it is within ""
+
+
+   Comments are created with two $. Anything in between the dollar signs will be considered a comment and will be ignored
+  
+   The code will consider all 95 basic ASCII printable characters besides, $, ", and \
+
+
+   The program will be performed with at least one action (-i, -d,-r,-c)
+
 
 language_semantics: |
-    BLAH BLAH
-    BLAH BLAH
+   Commands:
+   -i will read a single line of text from the console as a string in your program
 
+
+   -d will display any string expression to the screen. d:"" can be used to specfiy a string to output. -d will add a newline when displaying it to the terminal
+
+
+   -r will reverse any string expression producing a new string with the same characters in the reversed order. -r:"" can be used to specify string being reversed
+
+
+   -c will concatenate two strings together. The 2nd string that will be concatenated will be specified with a -c"" with the 2nd string being within the double quotes
+  
+   comments will be created with two $. Anything in between the two dollar signs will be considered as a comment. Comments have no effect to the program
+
+
+   The program will interpret the program from left to right.
+
+    The order of operations:
+        HIGHEST 
+        -r (reverse) 
+        -c (concatenation) 
+        -d (display)
+        $ $ Comments
+        LOWEST
 
 # Task 4
 
-reviewer_for: BLAH BLAH
 
-reviewed_by: BLAH BLAH
+reviewer_for: Richard Kang
 
-review_passed: N
 
-reviewer_comments: <
-    BLAH BLAH BLAH
+reviewed_by:Ellijah Baquiran
+
+
+review_passed: Y
+
+
+reviewer_comments: 
+	Order of operations for specifying which takes precedence over which
+
+
+
