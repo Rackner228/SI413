@@ -1,0 +1,64 @@
+# SI413 Lab 1.2: Interpreter for Just Strings language
+
+your_name: Richard Kang 
+
+your_alpha: m263222
+
+used_ai: Y 
+
+# leave this as NONE for your initial submission
+changes_on_resubmit: |
+    NONE
+
+
+# Task 1
+
+language_name: DRAMAQUEEN
+
+
+# Task 2
+
+example_program: |
+    shhh This is how a comment looks like shhh
+    shhh Doing a double reverse shhh
+    HEAR_YE(REVERTERE(REVERTERE(GIVE_ME))) shhh PRINTING shhh
+
+    shhh Now doing a concatentaion and a reverse then another concatentaion shhh
+    HEAR_YE(REVERTERE(GIVE_ME UNIFY ~ ~ GIVE_ME))
+
+    shhh Printing the ~ shhh
+    HEAR_YE(~CAPITAL ~ ~CAPITAL)
+    
+
+example_input_1: |
+    REVERSE~REVERSE
+    hello World
+    Hi
+
+example_output_1: |
+    REVERSE~REVERSE
+    iH dlroW olleh
+    ~
+
+
+example_input_2: |
+    TESTING
+    What is
+    this mess
+
+example_output_2: |
+    TESTING
+    ssem siht si tahW
+    ~
+
+
+# Task 4
+
+reviewer_for: BLAH BLAH
+
+reviewed_by: BLAH BLAH
+
+review_passed: N
+
+reviewer_comments: <
+    BLAH BLAH BLAH
