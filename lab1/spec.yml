@@ -7,10 +7,7 @@ your_name: Richard Kang
 your_alpha: m263222
 
 
-used_ai: Y # remember to turn in an aichat.md file as well
-
-
-
+used_ai: Y
 
 # Task 1
 language_name: Simple
@@ -46,9 +43,12 @@ language_syntax: |
    A string literal is a double-quote character ", followed by
    a sequence of ordinary characters and escape sequences, followed by
    another double quote character.
+
+   (Added Revision 1) Escape sequences start with a backslash \
+
+   (Added Revision 1) To include a $ inside of a string literal add a blackslash before the$ inside the string literal
   
    Any space, tab, or newlines will be treated as whitespace, unless if it is within ""
-
 
    Comments are created with two $. Anything in between the dollar signs will be considered a comment and will be ignored
   
@@ -83,21 +83,26 @@ language_semantics: |
         -d (display)
         $ $ Comments
         LOWEST
+   (Added Revision 1) Valid escapes are:
+      \"
+      \\
+      \$
+      \n
+      These are used so that these characters can be written within a string literal
+
+   (Added Revision 1) Comments:
+      $ can be written inside of a string literal instead of being used as a comment by adding a backslash before it, otherwise 
+      the $ $ will be treated as a comment instead of a string.
 
 # Task 4
 
-
 reviewer_for: Richard Kang
 
-
-reviewed_by:Ellijah Baquiran
-
+reviewed_by: Ellijah Baquiran
 
 review_passed: Y
 
-
-reviewer_comments: 
-	Order of operations for specifying which takes precedence over which
-
+reviewer_comments: |
+   Order of operations for specifying which takes precedence over which
 
 

@@ -24,7 +24,7 @@ example_program: |
     HEAR_YE(REVERTERE(REVERTERE(GIVE_ME))) shhh PRINTING shhh
 
     shhh Now doing a concatentaion and a reverse then another concatentaion shhh
-    HEAR_YE(REVERTERE(GIVE_ME UNIFY ~ ~ GIVE_ME))
+    HEAR_YE(REVERTERE(GIVE_ME UNIFY ~ ~ UNIFY GIVE_ME))
 
     shhh Printing the ~ shhh
     HEAR_YE(~CAPITAL ~ ~CAPITAL)
@@ -54,11 +54,11 @@ example_output_2: |
 
 # Task 4
 
-reviewer_for: BLAH BLAH
+reviewer_for: Hunter Shook
 
-reviewed_by: BLAH BLAH
+reviewed_by: Hunter Shook
 
-review_passed: N
+review_passed: Y
 
-reviewer_comments: <
-    BLAH BLAH BLAH
+reviewer_comments:
+    N/A

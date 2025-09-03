@@ -6,4 +6,4 @@
     HEAR_YE(REVERTERE(GIVE_ME UNIFY ~ ~ GIVE_ME))
 
     shhh Printing the ~ shhh
-    HEAR_YE(~CAPITAL ~ ~CAPITAL)
+    shhh HEAR_YE(~CAPITAL ~ ~CAPITAL) shhh
