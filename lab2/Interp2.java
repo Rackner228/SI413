@@ -4,9 +4,10 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.Stack;
 
-public class Interp {
+public class Interp2 {
     // Creating a stack that will store commands so that we know what commands to execute
     private Stack<String> s = new Stack<>();
+
     public static void main(String[] args) {
     
         // Getting in the file name
@@ -19,7 +20,11 @@ public class Interp {
         
         // Testing the created functions
         Interp test = new Interp();
-        test.commentParser(fileName);
+        javatest.commentParser(fileName);
         return;
     }
+
+
+
+
 }

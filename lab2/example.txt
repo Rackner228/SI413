@@ -3,7 +3,7 @@
     HEAR_YE(REVERTERE(REVERTERE(GIVE_ME))) shhh PRINTING shhh
 
     shhh Now doing a concatentaion and a reverse then another concatentaion shhh
-    HEAR_YE(REVERTERE(GIVE_ME UNIFY ~ ~ GIVE_ME))
+    HEAR_YE(REVERTERE(GIVE_ME UNIFY GIVE_ME))
 
     shhh Printing the ~ shhh
     shhh HEAR_YE(~CAPITAL ~ ~CAPITAL) shhh
