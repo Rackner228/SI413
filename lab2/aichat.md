@@ -809,3 +809,21 @@ Output:
 Result 1: Appl
 Result 2:
 Result 3:
+
+
+"How do I check in Java if the beginning part of a string and the last part of a string ends in a specific character?"
+
+"To check if a string in Java begins and ends with a specific character, you can use a combination of the startsWith() and endsWith() methods of the String class. You can also use the charAt() method."
+"Is there a way in regex to ensure that the first word is all caps and matches the word on the very end of the string?"
+
+"Yes, you can do this using a backreference in a regular expression. The regex would be ^([A-Z]+).*?\b\1$. This captures the first all-caps word and ensures the string ends with that exact same word."
+"What does the Patter.DOTALL do?"
+
+"The Pattern.DOTALL flag in Java regex changes the behavior of the special character . (dot). By default, the dot matches any character except line terminators. When you enable the Pattern.DOTALL flag, the dot will match all characters, including line terminators, which is useful for matching patterns that span multiple lines."
+"How do you use it with the expressions?"
+
+"You can use it by passing it as a flag to the Pattern.compile() method, like Pattern.compile(regex, Pattern.DOTALL), or by embedding the flag directly into your regex string using (?s)."
+"Can you make an expression that follows these conditions: A string is considered only a string if it starts and ends with a ~. However, if there is a in the beginning ~SOMECAPSWORD and a ~SOMECAPSWORD at the end of the string then ~ within the special word with ~ are printed out. However, if it isn't then the ~ in between the ~ doesn't get printed out. The first ~ and words in between the next ~ are the only parts that are considered a valid string?"
+
+"This requires a two-step process: first, use a regex ^~([A-Z]+).*~\\1$ to find the pattern. Then, use programming logic (e.g., an if/else statement) to decide whether to keep or remove the ~ characters based on whether the regex found a match."
+"Can you make a one liner trascript for this discussion that we had. I want to be able to copy and paste it so that I can submit evidence for using AI."

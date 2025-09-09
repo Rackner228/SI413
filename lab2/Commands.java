@@ -1,3 +1,7 @@
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Scanner;
+
 public class Commands {
 
     /**
@@ -29,5 +33,12 @@ public class Commands {
      */
     public static void HERESAY(String word) {
         System.out.println(word);
+    }
+
+    public static String GIVE_ME() {
+        String result = "";
+        Scanner sc = new Scanner(System.in);
+        result = sc.nextLine();
+        return result;
     }
 }

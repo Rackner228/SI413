@@ -18,8 +18,7 @@ public class Interp {
         String fileName = args[0];
         
         // Testing the created functions
-        Interp test = new Interp();
-        test.commentParser(fileName);
+        Parser.commentParser(fileName); 
         return;
     }
 }
