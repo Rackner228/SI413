@@ -165,7 +165,7 @@ public class Parser {
      * Checks if ~ should be kept in and if it is a valid string
      */
     private String tildeCleaner(String s) {
-        //System.out.println("CLEANING:" + s);
+        System.out.println("CLEANING:" + s);
         // Not a valid string
         String result = "";
         if (s.length() == 0 || s.charAt(0) != '~') {
@@ -175,12 +175,12 @@ public class Parser {
         // Got this from Gemini to backtrace and use matcher.
         Matcher m1 = Pattern.compile("^~([A-Z]*)(.*?)~\\1$", Pattern.DOTALL).matcher(s);
         if (m1.matches()) {
-            result = m1.group(2);
+            return m1.group(2);
         }
         // Got this from Gemini to backtrace and use matcher.
         Matcher m2 = Pattern.compile("^~[A-Z]* (.*?) ~", Pattern.DOTALL).matcher(s);
         if (m2.find()) {
-            result = m2.group(1);
+            return m2.group(1);
         }
         System.out.println("CLEAN: " + result);
         return result;
@@ -192,7 +192,7 @@ public class Parser {
         Parser parser = new Parser();
         String test = parser.tildeCleaner("~HELLO print this out: ~ ~HELLO");
         System.out.println(test);
-        parser.commandParser("HEAR_YE(~APPLE I'd like to print a ~ thank you very much. ~APPLE))"); //Something is wrong with UNIFY
+        parser.commandParser("HEAR_YE(~APPLE I'd like to print a ~ thank you very much. ~APPLE)"); //Something is wrong tildeCleaner now
         //parser.commandParser("HEAR_YE(REVERTERE(~ I am a DRAMATIC LANGUAGE ~)) shhh I NEED MY SPACE! shhh");
         return;
     }
