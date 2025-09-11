@@ -8,7 +8,8 @@ used_ai: Y
 
 # leave this as NONE for your initial submission
 changes_on_resubmit: |
-    NONE
+    Fixed the Interp.java
+    Object Orientated the code: Commands.java, Parser.java, Interp.java
 
 
 # Task 1
@@ -61,4 +62,4 @@ reviewed_by: Hunter Shook
 review_passed: Y
 
 reviewer_comments:
-    N/A
+    Good job on the Interp. Interp seems to work fine.
