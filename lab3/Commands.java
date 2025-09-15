@@ -17,7 +17,7 @@ public class Commands {
             ch = s.charAt(i);
             r = ch + r; 
         }
-        throw new UnsupportedOperationException("this doesn't work yet")
+        throw new UnsupportedOperationException("this doesn't work yet");
         return r;
     }
 
