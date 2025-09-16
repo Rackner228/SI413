@@ -14,6 +14,7 @@ public class ll {
 
     private String ll_filename;
 
+
     // Constructor
     public ll(String file) {
         ll_filename = file;
@@ -52,10 +53,24 @@ public class ll {
         }
     }
 
-    public void concat() {
+    public void print(String word) {
+        try (FileWriter fWriter = new FileWriter(ll_filename, true)) {
+            // length includes null terminator
+            int length = word.length() + 1;
 
+            // unique label for each literal (so multiple prints work)
+            String label = "@lit" + System.currentTimeMillis(); // or use a counter
 
-    }
+            // string constant
+            String text = label + " = constant [" + length + " x i8] c\"" + word + "\\00\"\n";
 
-    public void 
+            // write the constant
+            fWriter.write(text);
+            //fWriter.write("  call i32 @puts(ptr " + label + ")\n");
+
+        } 
+        catch (IOException e) {
+            System.out.println("An error occurred in writing to the .ll");
+            e.printStackTrace();
+        }
 }

@@ -4,7 +4,12 @@ import java.util.Scanner;
 
 public class Commands {
 
-    
+    // This is so we can write into the ll
+    private ll llvmFile;
+
+    public Commands(ll llvmFile) {
+        this.llvmFile = llvmFile;
+    }
 
     /**
      * REVERTERE reversing of a string (Source: https://www.geeksforgeeks.org/java/reverse-a-string-in-java/)
@@ -28,8 +33,8 @@ public class Commands {
      */
     public static String UNIFY(String word1, String word2) {
         String newWord = word1 + word2;
-        throw new UnsupportedOperationException("this doesn't work yet");
-        return newWord;
+        Compiler.llvmFile.print(word);
+         return newWord;
     }
 
     /**
@@ -44,7 +49,7 @@ public class Commands {
         String result = "";
         Scanner sc = new Scanner(System.in);
         result = sc.nextLine();
-        throw new UnsupportedOperationException("this doesn't work yet")
+        throw new UnsupportedOperationException("this doesn't work yet");
         return result;
     }
 }

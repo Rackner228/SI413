@@ -7,6 +7,9 @@ import java.io.File;
 import java.io.FileWriter;
 
 public class Compiler {
+
+    public static ll llvmFile;
+
     // Creating a stack that will store commands so that we know what commands to execute
     private Stack<String> s = new Stack<>();
     public static void main(String[] args) {
@@ -24,7 +27,7 @@ public class Compiler {
 
         // Checking for 2nd arg and creating the file
         if(args[1] != null) {
-             ll llvmFile = new ll(args[1]);
+            llvmFile = new ll(outputFile);
         }
         return;
     }
