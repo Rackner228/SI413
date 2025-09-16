@@ -27,7 +27,7 @@ public class Compiler {
 
         // Checking for 2nd arg and creating the file
         if(args[1] != null) {
-            llvmFile = new ll(outputFile);
+            llvmFile = new ll(args[1]);
         }
         return;
     }
