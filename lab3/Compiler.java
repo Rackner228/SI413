@@ -23,8 +23,7 @@ public class Compiler {
         // Checking for 2nd arg and creating the file
         llvmFile = new ll(args[1]);
         Parser.commentParser(args[0]); 
-        llvmFile.print("Hello");
-        llvmFile.close();
+        Compiler.llvmFile.close();
         return;
     }
 }

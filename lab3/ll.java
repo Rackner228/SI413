@@ -11,8 +11,8 @@ import java.io.FileWriter;
  * These are ways for me to write easier onto the .ll file
  */
 public class ll {
-
     private String ll_filename;
+    private int printCounter = 1;
 
 
     // Constructor
@@ -20,8 +20,9 @@ public class ll {
         ll_filename = file;
         // Creating the file: Source(https://www.w3schools.com/java/java_files_create.asp)
         try {
-            File myObj = new File(ll_filename); // Create File object
-            if (myObj.createNewFile()) {           // Try to create the file
+            // Creating the file
+            File myObj = new File(ll_filename);
+            if (myObj.createNewFile()) {        
                 System.out.println("File created: " + myObj.getName());
             } 
             else {
@@ -41,7 +42,7 @@ public class ll {
             // The basic text
             String text = "target triple = \"x86_64-pc-linux-gnu\"\n\n" +
             "declare i32 @puts(ptr noundef) #1\n\n" +
-            "define i32 @main() {\n" + "  call i32 @puts(ptr @lit1)\n";
+            "define i32 @main() {\n";
 
             // Writing into file
             fWriter.write(text);
@@ -59,14 +60,15 @@ public class ll {
             int length = word.length() + 1;
 
             // unique label for each literal (so multiple prints work)
-            String label = "@lit" + System.currentTimeMillis(); // or use a counter
+            String label = "@lit" + printCounter;
+            printCounter = printCounter + 1;
 
             // string constant
-            String text = label + " = constant [" + length + " x i8] c\"" + word + "\\00\"\n";
+            String text = "\t" + label + " = constant [" + length + " x i8] c\"" + word + "\\00\"\n";
 
             // write the constant
             fWriter.write(text);
-            fWriter.write("  call i32 @puts(ptr " + label + ")\n");
+            fWriter.write("\tcall i32 @puts(ptr " + label + ")\n");
 
         } 
         catch (IOException e) {
@@ -77,7 +79,7 @@ public class ll {
 
     public void close() {
         try (FileWriter fWriter = new FileWriter(ll_filename, true)) {
-            fWriter.write("  ret i32 0\n}\n");
+            fWriter.write("\tret i32 0\n}\n");
         } catch (IOException e) {
             e.printStackTrace();
         }

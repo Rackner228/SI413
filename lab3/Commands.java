@@ -37,6 +37,7 @@ public class Commands {
         //throw new UnsupportedOperationException("this doesn't work yet");
         System.out.println(word);
         Compiler.llvmFile.print(word);
+        
     }
 
     public static String GIVE_ME() {
