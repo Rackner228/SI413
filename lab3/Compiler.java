@@ -19,16 +19,12 @@ public class Compiler {
             System.out.println("java Compiler .txt   .ll\n");
             return;
         }
-
-        String fileName = args[0];
         
-        // Running the Interp
-        Parser.commentParser(fileName); 
-
         // Checking for 2nd arg and creating the file
-        if(args[1] != null) {
-            llvmFile = new ll(args[1]);
-        }
+        llvmFile = new ll(args[1]);
+        Parser.commentParser(args[0]); 
+        llvmFile.print("Hello");
+        llvmFile.close();
         return;
     }
 }

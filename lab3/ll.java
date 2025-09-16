@@ -36,12 +36,12 @@ public class ll {
         }
         // Now writing to the file for basic format
         try {
-            FileWriter fWriter = new FileWriter(ll_filename);
+            FileWriter fWriter = new FileWriter(ll_filename, true);
 
             // The basic text
             String text = "target triple = \"x86_64-pc-linux-gnu\"\n\n" +
             "declare i32 @puts(ptr noundef) #1\n\n" +
-            "define i32 @main() {\n" + "  call i32 @puts(ptr @lit1)\n  ret i32 0\n}\n";
+            "define i32 @main() {\n" + "  call i32 @puts(ptr @lit1)\n";
 
             // Writing into file
             fWriter.write(text);
@@ -66,11 +66,19 @@ public class ll {
 
             // write the constant
             fWriter.write(text);
-            //fWriter.write("  call i32 @puts(ptr " + label + ")\n");
+            fWriter.write("  call i32 @puts(ptr " + label + ")\n");
 
         } 
         catch (IOException e) {
             System.out.println("An error occurred in writing to the .ll");
+            e.printStackTrace();
+        }
+    }
+
+    public void close() {
+        try (FileWriter fWriter = new FileWriter(ll_filename, true)) {
+            fWriter.write("  ret i32 0\n}\n");
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
