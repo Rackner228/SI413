@@ -4,6 +4,8 @@ import java.util.Scanner;
 
 public class Commands {
 
+    
+
     /**
      * REVERTERE reversing of a string (Source: https://www.geeksforgeeks.org/java/reverse-a-string-in-java/)
      */
@@ -26,7 +28,7 @@ public class Commands {
      */
     public static String UNIFY(String word1, String word2) {
         String newWord = word1 + word2;
-        throw new UnsupportedOperationException("this doesn't work yet")
+        throw new UnsupportedOperationException("this doesn't work yet");
         return newWord;
     }
 
@@ -34,7 +36,7 @@ public class Commands {
      *  Displaying the word on the terminal
      */
     public static void HERESAY(String word) {
-        throw new UnsupportedOperationException("this doesn't work yet")
+        throw new UnsupportedOperationException("this doesn't work yet");
         System.out.println(word);
     }
 
