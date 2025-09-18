@@ -1,4 +1,4 @@
-target triple = "x86_64-pc-linux-gnu"
+target triple = "x87_64-pc-linux-gnu"
 
 declare i32 @puts(ptr noundef) #1
 

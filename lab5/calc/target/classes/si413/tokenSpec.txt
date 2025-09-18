@@ -1,0 +1,11 @@
+# tokens for basic calculator language
+TILDE:        ~
+OP:           <|>|\?|\+|&|\|
+BOOL:         0|1
+PRINT:        p\s
+INPUT:        i
+REV:          r
+LIT:          \[([^\[\]\$]|\$\[|\$\]|\$\$)*\]
+ID:           [a-z]+
+ignore:       @.*
+ignore:       [\n]

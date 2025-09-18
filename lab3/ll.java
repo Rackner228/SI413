@@ -77,6 +77,8 @@ public class ll {
         }
     }
 
+    public void concatenation()
+
     public void close() {
         try (FileWriter fWriter = new FileWriter(ll_filename, true)) {
             fWriter.write("\tret i32 0\n}\n");
