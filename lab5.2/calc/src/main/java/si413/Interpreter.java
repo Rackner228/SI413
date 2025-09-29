@@ -46,8 +46,13 @@ public class Interpreter {
     private class ExpressionVisitor extends ParseRulesBaseVisitor<String> {
         public String visitLitExpr(ParseRules.LitExprContext ctx) {
             String word = ctx.LIT().getText();
-            word = word.replace("[", "");
-            word = word.replace("]", "");
+
+            word = word.replaceAll("(?<!\\$)\\[","");
+            word = word.replaceAll("(?<!\\$)\\]","");
+            if(word.contains("$[") && word.contains("$]")) {
+                word = word.replace("$[", "");
+                word = word.replace("$]", "");
+            }
             return word;
         }
 
