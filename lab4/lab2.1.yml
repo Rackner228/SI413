@@ -4,7 +4,7 @@ your_name: Richard Kang
 
 your_alpha: 263222
 
-used_ai: 2 # remember to turn in an aichat.md file as well
+used_ai: N # remember to turn in an aichat.md file as well
 
 # describe any collaboration or help you got from classmates
 collaboration: |
@@ -12,64 +12,193 @@ collaboration: |
 
 # leave this as NONE for your initial submission
 changes_on_resubmit: |
-    NONE
+    Fixed undefined tokens
+    Added Varaible
+    And added specification for parsing specific types
 
 #### TASK 1 ####
 
-language_name: BLAH
-
+language_name: Talk
 
 #### TASK 2 ####
 
 example_program: |
-    BLAH This is a comment BLAH 
-    speech:("This is how you print things out to the terminal")
-    
+    Blah This is a comment Blah
+    Speak:"This is how you print things out to the terminal"
+
+    Blah This is concatenation Blah
+    Conversation: "hello" ++ "My Name is"
+
+    Blah This is how you make varaibles for values Blah
+    Proclaim: Minecraft = "MINE"
+    Proclaim: Tetris = "TETRIS"
+    Speak: Tetris
+    Speak: Minecraft
+
+    Blah This is a boolean Blah
+    Volume: test = Quiet    Blah  quiet is false Blah                      
+    Volume: what = Loud     Blah Loud is true Blah Blah
+    Speak: test
+    Speak: what
+
+    Blah Substring test
+    Speak: "craft" in ("Minecraft" ++ "!")
+
+    Blah lexicographic Blah
+    Speak: "Apple" < "MINECRAFTBATTLEPASS"    Blah this is true Blah
+
+    Blah This is how you get an input
+    Speak: Listen: 
+
+    Blah This is how you reverse Blah
+    Speak: Echo: "REVERSE"
+
+    Blah Input fun Blah
+    Listen: testing
+    Speak: Echo: Conversation: testing + "Hi"
+
+
 
 example_input_1: |
-    BLAH BLAH
+    testing
+    Hello
+    what is this
 
 example_output_1: |
-    BLAH BLAH
+    This is how you print things out to the terminal
+    TETRIS
+    MINE
+    false
+    true
+    true
+    true
+    testing
+    ESREVER
+    iHolleH
 
 example_input_2: |
-    BLAH BLAH
+    BLAH
+    BLAH
 
 example_output_2: |
-    BLAH BLAH
+    This is how you print things out to the terminal
+    TETRIS
+    MINE
+    false
+    true
+    true
+    true
+    BLAH
+    ESREVER
+    iHHALB
 
 
 #### TASK 3 ####
 
 # there are just two example tokens below; you should remove or modify them!!
 tokens: |
-    Token name    Regex
-    ----------    -----
-    INT           [0-9]+
-    --            [ \t\n]
+    Token name      Regex
+    ----------      -----
+    SPEAK           Speak:
+    CONVERSATION    Conversation:
+    ECHO            Echo:
+    LISTEN          Listen:
+    PROCLAIM        Proclaim: 
+    VOLUME          Volume:
+
+    TRUE            Loud    
+    FALSE           Quiet
+
+    AND             And 
+    OR              Or
+    NOT             Not
+    IN              in
+
+    VARIABLE        [A-Za-z_][A-Za-z0-9_]*
+    STRINGLITERAL   "[^\"]*"
+    CONCATENATION   ++
+    LESSTHAN        <
+    GREATERTHAN     >
+    EQUAL           =
+
+    COMMENT         Blah[^\n]*Blah
+    WHITESPACE      [\t\r\n]+
+
 
 
 #### TASK 4 ####
 
 # remove or replace the example production rule with your own!
 grammar: |
-    program -> YOUR TOKENS and nonterminals HERE
+    program -> statements
+    statements -> statements candy | (empty thingy that I cant write)
+
+
+    statement -> 
+        SPEAK expressions |
+        CONVERSATION expressions |
+        ECHO expressions |
+        LISTEN expressions |
+        PROCLAIM VARIABLE EQUAL expressions|
+        VOLUME VARIABLE EQUAL boolean |
+        COMMENT
+
+    boolean ->
+        TRUE |
+        FALSE
+
+    expressions ->
+        expressions CONCATENATION expression |
+        expression LESSTHAN expression |
+        expression GREATERTHAN expression | 
+        expression EQUAL expression |
+        expression IN expression |
+        STRINGLITERAL |
+        ECHO expression |
+        LISTEN expressions |
+        STRINGLITERAL |
+        VARIABLE
 
 
 #### TASK 5 ####
 
 semantics: |
-    BLAH BLAH
-    BLAH BLAH
+    Speak:      Prints the string literal or value to output. Booleans will be printed as true or false
+
+    Conversation (++):      will concatenate two strings together. The String or variable the left of the ++ will be concatenation with the String Literal or variable on the right of the ++.
+
+    Proclaim:       will assign a string literal to an variable. If the variable already exists then the string literal is updated instead.
+
+    Volume:         will assign a boolean value to a an variable. Boolean values are Loud = true and Quiet = False
+
+    Echo:       will reverse any string literal or the string literal in an variable producing a new string with the same characters in the reversed order. 
+
+    Listen:     will read a single line of text from the console as a string literal. If there is a Variable attached to the listen then then it will read the line of text and store it in the varaible.
+
+    LessThan (<):      Compares two string expressions lexicographically. It will return true if the string length on the left of the  < is smaller than the length of the right string. 
+    Otherwise, it will return false.
+
+    GreaterThan (>):       Compares two string expressions lexicographically.  will return true if the string length on the left of the  > is larger than the length of the right string. Otherwise, it will return false.
+
+    Equal (=):      Compares two values (strings or booleans). Returns true if they are equal, otherwise false. = Is also used to assgin String values to variables.
+
+    in     checks if one string is a (contiguous) substring of another one. If it is contiguous then return true. Otherwise return false.
+
+    Variables:      When used in an expression the equal to the value stored in that variable.
+
+    Comments        Blah Blah
+
+    -Note: All comamnds a case sensitive. The first letter must be uppercased
+    
 
 
 #### TASK 6 ####
 
-reviewer_for: BLAH BLAH
+reviewer_for: Richard Kang
 
-reviewed_by: BLAH BLAH
+reviewed_by: Peter McDermott
 
-review_passed: N
+review_passed: Y
 
 reviewer_comments: |
-    BLAH BLAH BLAH
+    Grammar looks good. Nice corrections, have a good night.
