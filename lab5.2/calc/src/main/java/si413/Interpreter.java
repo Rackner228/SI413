@@ -51,7 +51,7 @@ public class Interpreter {
             word = word.replaceAll("(?<!\\$)\\]","");
             if(word.contains("$[") && word.contains("$]")) {
                 word = word.replace("$[", "[");
-                word = word.replace("$]", "] ");
+                word = word.replace("$]", "]");
             }
             return word;
         }
@@ -124,7 +124,7 @@ public class Interpreter {
             } 
             catch (Exception e) {
                 System.exit(7);
-                return null;do
+                return null;
             }
         }
 
@@ -150,6 +150,7 @@ public class Interpreter {
             }
         }
     }
+    
     private Map<String, String> variables_stored = new HashMap<>(); // Hashmap for storing variables
     private Integer savedValue = null;
     private Scanner input = new Scanner(System.in);
