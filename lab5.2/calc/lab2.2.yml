@@ -8,7 +8,7 @@ used_ai: Y # remember to turn in an aichat.md file as well
 
 # leave this as NONE for your initial submission
 changes_on_resubmit: |
-    NONE
+    Fixed the crash for the program in regards with input
 
 language_name: Truffle
 

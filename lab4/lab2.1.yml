@@ -77,8 +77,9 @@ example_output_1: |
     iHolleH
 
 example_input_2: |
-    BLAH
-    BLAH
+    testing
+    Candy
+    Is this it
 
 example_output_2: |
     This is how you print things out to the terminal
@@ -88,9 +89,9 @@ example_output_2: |
     true
     true
     true
-    BLAH
+    WADU
     ESREVER
-    iHHALB
+    iHydnaC
 
 
 #### TASK 3 ####
@@ -130,16 +131,15 @@ tokens: |
 
 # remove or replace the example production rule with your own!
 grammar: |
-    program -> statements
-    statements -> statements candy | (empty thingy that I cant write)
-
+    program -> statements_list
+    statements_list -> statements_list statement | epsilon
 
     statement -> 
-        SPEAK expressions |
-        CONVERSATION expressions |
-        ECHO expressions |
-        LISTEN expressions |
-        PROCLAIM VARIABLE EQUAL expressions|
+        SPEAK expression |
+        CONVERSATION expression |
+        ECHO expression |
+        LISTEN VARIABLE |
+        PROCLAIM VARIABLE EQUAL expression |
         VOLUME VARIABLE EQUAL boolean |
         COMMENT
 
@@ -147,16 +147,14 @@ grammar: |
         TRUE |
         FALSE
 
-    expressions ->
-        expressions CONCATENATION expression |
+    expression ->
+        expression CONCATENATION expression |
         expression LESSTHAN expression |
         expression GREATERTHAN expression | 
         expression EQUAL expression |
         expression IN expression |
         STRINGLITERAL |
-        ECHO expression |
-        LISTEN expressions |
-        STRINGLITERAL |
+        LISTEN |
         VARIABLE
 
 

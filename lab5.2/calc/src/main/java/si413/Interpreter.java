@@ -50,8 +50,8 @@ public class Interpreter {
             word = word.replaceAll("(?<!\\$)\\[","");
             word = word.replaceAll("(?<!\\$)\\]","");
             if(word.contains("$[") && word.contains("$]")) {
-                word = word.replace("$[", "");
-                word = word.replace("$]", "");
+                word = word.replace("$[", "[");
+                word = word.replace("$]", "] ");
             }
             return word;
         }
@@ -80,7 +80,7 @@ public class Interpreter {
                 }
             }
             else if (op.equals("<")){
-                if (left.compareTo(right) < 0){
+                if (left.compareTo(right) > 0){
                     return "1";
                 }
                 else {
@@ -116,9 +116,16 @@ public class Interpreter {
         }
 
         public String visitInputExpr(ParseRules.InputExprContext ctx) {
-            Scanner input = new Scanner(System.in);
-            String name = input.nextLine();
-            return name;
+            try {
+                if (!input.hasNextLine()) {
+                    System.exit(7);
+                }
+                return input.nextLine();
+            } 
+            catch (Exception e) {
+                System.exit(7);
+                return null;do
+            }
         }
 
         public String visitRevExpr(ParseRules.RevExprContext ctx) {
@@ -145,7 +152,7 @@ public class Interpreter {
     }
     private Map<String, String> variables_stored = new HashMap<>(); // Hashmap for storing variables
     private Integer savedValue = null;
-    private Scanner stdin = new Scanner(System.in);
+    private Scanner input = new Scanner(System.in);
     private StatementVisitor svisitor = new StatementVisitor();
     private ExpressionVisitor evisitor = new ExpressionVisitor();
     private Tokenizer tokenizer;

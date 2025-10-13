@@ -1,0 +1,972 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+shopt -s nullglob
+
+infofile_name='.clubinfo'
+
+function usage {
+  cat <<EOF
+bulc: BULk extraCtion of submissions v1.6
+(the opposite of club)
+
+Useful to USNA CS Department faculty to download all student submissions
+for a given course/section/assignment.
+
+Usage: ${0##*/} [OPTIONS] FOLDER
+
+FOLDER is the destination folder.
+
+Each student submission will be put into a separate subfolder by username.
+
+Autotest results are summarized in FOLDER/results.csv
+Complete outputs for each test case are saved to
+  FOLDER/STUDENT/test-outputs/TESTCASE.txt
+
+Use OPTIONS (or follow the prompts) to select assignment, section, etc.
+If an extraction has already been performed to that same folder, it
+will remember and re-do the same course and project.
+
+OPTIONS:
+  -cCOURSE or --course=COURSE
+    Specify which course, e.g., "-c ic210"
+  -pPROJECT or --project=PROJECT
+    Specify which project, e.g., "-p lab01"
+  -tSECTION or --section=SECTION
+    Specify a certain section, e.g. "-t 1001"
+    May be specified multiple times.
+    Default is to download (most recent) submissions from all sections.
+    Leave off SECTION (just put -t) to get a drop-down list of all sections.
+  -ySEMESTER or --year=SEMESTER
+    Specify a "history" semester in the past as (regex syntax)
+      [fsu][0-9]{2}(b[1-3])?
+    Examples: f23, s24, u21b3
+    Default is the current semester.
+  -uUSER or --user=USER
+    Specify the username to use, e.g., "-u m123456".
+    May be specified multiple times.
+    If the --names option is also given, the NAME here can be a display name.
+    Default is to download (most recent) submissions for all students.
+    Leave off USER (just put -u) to get a drop-down list of who submitted.
+  -s[SID] or --sid[=SID]
+    Download one particular submission according to the given SID.
+    May be specified multiple times.
+    Default is to download most recent submission(s).
+    Leave off SID (just put -s) to get a dron-down list of matching SIDs.
+  -nNAMESFILE or --names=NAMESFILE
+    The file should contain lines "username displayname", like
+      m123456 MIDN Soandso
+    and then the system will show the displayname instead of the username when relevant.
+  -r
+    Before doing anything else, try to update ("refresh") bulc itself from gitlab
+  -h or --help
+    Display this help message and exit
+
+bulc was written by Dr. Roche in January 2024. Use the gitlab page to
+submit bug reports, or make your own improvements and submit a merge request:
+  https://gitlab.usna.edu/roche/club
+EOF
+  [[ $# -eq 1 ]] && exit $1
+}
+
+function emsg {
+  [[ $# -ge 1 ]] && echo "ERROR: $*" >&2
+  echo "Run '${0##*/} -h' to get help" >&2
+  exit 1
+}
+
+############################################################
+### Check required tools exist
+############################################################
+
+need_tools=0
+for cmd in curl jq mktemp readlink; do
+  if ! command -v "$cmd" >/dev/null; then
+    echo "Required program '$cmd' not found"
+    need_tools=1
+  fi
+done
+if (( need_tools )); then
+  cat <<EOF
+
+Some required programs were not found installed on this system.
+If you have sudo access on this (virtual) machine, run:
+  sudo apt update
+  sudo apt install -y curl jq coreutils
+and enter your local (VM) password when prompted.
+Then re-run this program after the installs are complete.
+EOF
+  exit 1
+fi
+unset need_tools
+
+############################################################
+### Default variable settings
+############################################################
+
+apifile="$HOME/.clubapikey"
+course=''
+project=''
+declare -a sections=()
+specsect=0
+asksect=0
+declare -a users=()
+specuser=0
+askuser=0
+declare -a sids=()
+specsid=0
+asksid=0
+namesfile=''
+saveinfo=1
+refresh=0
+historic=0
+CURL=${CURL:-curl}
+RED='\033[1;31m'
+GREEN='\033[1;32m'
+BLUE='\033[1;34m'
+PURPLE='\033[1;35m'
+NC='\033[0m'
+
+############################################################
+### Process command-line arguments
+############################################################
+
+args=$(getopt -n "$0" -o 'c:p:t::y:u::s::n:rh' -l 'course:,project:,section::,year:,user::,sid::,names:,refresh,help' -- "$@") || emsg
+eval set -- "$args"
+
+while true; do
+  case "$1" in
+    -c|--course)
+      course=$2
+      shift 2
+      ;;
+    -p|--project)
+      project=$2
+      shift 2
+      ;;
+    -t|--section)
+      specsect=1
+      if [[ -n $2 ]]; then
+        sections+=( "$2" )
+      else
+        asksect=$(( asksect + 1 ))
+      fi
+      shift 2
+      ;;
+    -y|--year)
+      if [[ $2 =~ ^([fsu])([0-9]{2})(b[1-3])? ]]; then
+        historic=1
+        semester=${BASH_REMATCH[1]}
+        year="20${BASH_REMATCH[2]}"
+        block=${BASH_REMATCH[3]:-1}
+        case "$semester" in
+          f)
+            semester='FALL'
+            year=$(( year + 1 ))
+            ;;
+          s)
+            semester='SPRING'
+            ;;
+          u)
+            semester='SUMMER'
+            year=$(( year + 1 ))
+            ;;
+        esac
+      else
+        echo "ERROR: Invalid semester format '$2'"
+        echo "Format should be e.g. s23, f24, u21b3, CALENDAR year"
+        exit 1
+      fi
+      shift 2
+      ;;
+    -u|--user)
+      specuser=1
+      if [[ -n $2 ]]; then
+        users+=( "$2" )
+      else
+        askuser=$(( askuser + 1 ))
+      fi
+      shift 2
+      ;;
+    -s|--sid)
+      specsid=1
+      if [[ -n $2 ]]; then
+        sids+=( "$2" )
+      else
+        asksid=$(( asksid + 1 ))
+      fi
+      shift 2
+      ;;
+    -n|--names)
+      namesfile=$(readlink -f "$2")
+      shift 2
+      ;;
+    -r|--refresh)
+      refresh=1
+      shift
+      ;;
+    -h|--help)
+      usage 0
+      ;;
+    --)
+      shift
+      break
+      ;;
+  esac
+done
+
+if [[ $# -ne 1 ]]; then
+  usage 1
+fi
+
+# Go to destination folder
+destfold=$1
+if [[ ! -e $destfold ]]; then
+  mkdir "$destfold"
+fi
+cd "$destfold"
+infofile="$(pwd)/$infofile_name"
+
+############################################################
+### Create temp folder
+############################################################
+
+tempfold=$(mktemp --tmpdir -d bulcXXXXXXXX)
+function cleanup {
+  rm -rf "$tempfold"
+}
+trap cleanup EXIT
+
+############################################################
+### Function to try updating club itself
+############################################################
+function maybe_update {
+  local src current updated
+  echo "Checking for updates to bulc itself..."
+  src=$(readlink -f "$0")
+  pushd "$(dirname "$src")"
+  if ! current=$(git rev-parse HEAD); then
+    echo "ERROR: bulc does not appear to exist in a git repo, so I don't know how to update it"
+    exit 1
+  fi
+  if ! git pull; then
+    echo "ERROR: could not pull new changes. Make sure you are on the USNA intranet"
+    exit 1
+  fi
+  updated=$(git rev-parse HEAD)
+  if [[ $current != $updated ]]; then
+    echo "Update found! Please re-run bulc to use the new version."
+    exit 0
+  fi
+  popd
+  return 0
+}
+
+############################################################
+### Function read names from namesfile and update $udisp
+############################################################
+function read_namesfile {
+  # new globals: nametrans assoc array, $udisps display version of $users
+  declare -gA nametrans=()
+  declare -ga udisps=( "${users[@]}" )
+  local username dispname
+  if [[ -n $namesfile ]]; then
+    [[ -r $namesfile ]] || emsg "Could not read names file '$namesfile'"
+    echo "Reading names translation from '$namesfile'"
+    exec 4<"$namesfile"
+    while read -u4 username dispname; do
+      nametrans["$username"]=$dispname
+      for (( i=0 ; i < ${#users[@]} ; ++i )); do
+        if [[ $dispname = "${users[$i]}" ]]; then
+          udisps[$i]="$dispname"
+          users[$i]=$username
+        fi
+      done
+    done
+    exec 4<&-
+  fi
+  return 0
+}
+
+############################################################
+### Function to make API request
+############################################################
+function api_request {
+  # usage: api_request API_PATH OUTPUT_FILE [--nojq] [CURL_OPTIONS]
+  # --nojq means don't process the output through json
+  local tempout="$tempfold/api_out.json"
+  local path=$1
+  local ofile=$2
+  local json=1
+  shift 2
+  [[ -n $apikey ]] || emsg "api_request needs apikey"
+  if [[ $# -ge 1 && $1 = '--nojq' ]]; then
+    shift
+    json=0
+  fi
+  echo -n "Making API request for $path..."
+  if ! $CURL -fsS -o "$tempout" "$@" "https://submit.usna.edu/api/$apikey/$path"; then
+    echo <<EOF
+
+
+ERROR accessing submit system API.
+Make sure you are on the USNA intranet.
+Try going to https://submit.usna.edu/ in a web browser to check that the
+site is up and you are on the intranet.
+You might need to download DoD certificates; try the instructions here:
+  https://apt.cs.usna.edu/docs/ssl-system.html
+You might have entered the wrong API key in the past. Try running:
+  rm -f '$apifile'
+to delete the saved key, then run this script again.
+EOF
+    exit 1
+  fi
+  echo -ne "\r                                                                        \r"
+  if (( json )); then
+    jq '.results' <"$tempout" >"$ofile"
+  else
+    cp "$tempout" "$ofile"
+  fi
+  rm "$tempout"
+  return 0
+}
+
+############################################################
+### Function to lookup and save API key
+############################################################
+
+function get_api_key {
+  local submit_bin="$HOME/bin/submit" apisaved=0
+  apikey=''
+  if [[ -e $apifile ]]; then
+    echo "Using API key from $apifile"
+    apikey=$(cat "$apifile")
+    apisaved=1
+  elif [[ -e $submit_bin ]] && grep -q '^  apikey=' "$submit_bin" &>/dev/null; then
+    echo "Trying to steal API key from $submit_bin"
+    apikey=$(sed -n 's/^  apikey="\([^"]*\)"/\1/p' "$submit_bin")
+  fi
+  if [[ -z $apikey ]]; then
+    cat <<EOF
+Could not find your API key for submit. Let's look it up!
+Open a browser and go to https://submit.usna.edu/
+Log in (click the face on the top-left).
+Then go to (Your username)->View/Reset API key
+Your API key is shown in a box. Copy/paste it below.
+
+EOF
+    read -p "Your submit API key: " apikey
+    api_request 'users/list' /dev/null
+  fi
+  if (( ! apisaved )); then
+    echo "Saving API key to $apifile"
+    echo "$apikey" >"$apifile"
+  fi
+  return 0
+}
+
+############################################################
+### Function to display a menu
+############################################################
+
+function menu {
+  # usage: menu [-d DEFAULT] [-p PROMPT] [-f FULL_DESCRIPTIONS] OPTIONS...
+  # Each OPTION will be displayed along with a single letter to select it.
+  # If -f FULL is given, FULL should be the name of an associative array of
+  #   OPTION:DESCRIPTION pairs, and the corresponding DESCRIPTION is displayed
+  #   for each OPTION.
+  # DEFAULT is a default OPTION to select if they hit enter or space
+  # Any OPTION starting with + is printed as-is as a string; it's not selectable.
+  # The chosen option is saved in variable $menu_select
+  unset menu_select
+  local hasdesc=0
+  local default=''
+  local prompt='Choose an option from the list above: '
+  local -A valid_opts=()
+  local olet opt selected selectdef
+  local -A opt_lookup=()
+  while [[ $# -ge 1 && $1 =~ ^-. ]]; do
+    if [[ $1 = '-d' ]]; then
+      default="$2"
+      shift 2
+    elif [[ $1 = '-p' ]]; then
+      prompt="$2"
+      shift 2
+    elif [[ $1 = '-f' ]]; then
+      local -n desc="$2"
+      hasdesc=1
+      shift 2
+    else
+      break
+    fi
+  done
+  echo
+  for olet in {a..z} {A..Z} {0..9}; do
+    while [[ $# -ge 1 && $1 =~ ^'+' ]]; do
+      echo -e "${1:1}"
+      shift
+    done
+    [[ $# -ge 1 ]] || break
+    opt="$1"
+    shift
+    valid_opts["$olet"]=1
+    echo -n "  $olet"
+    if [[ $opt = $default ]]; then
+      echo -n "  (default)"
+    fi
+    if (( hasdesc )) && [[ -v "desc[$opt]" ]]; then
+      echo -e ": ${desc["$opt"]}"
+    else
+      echo ": $opt"
+    fi
+    opt_lookup["$olet"]=$opt
+  done
+  while (( 1 )); do
+    IFS='' read -n1 -p "$prompt" selected
+    selectdef=0
+    [[ -z $selected ]] && selectdef=1 || echo
+    [[ $selected = ' ' ]] && selectdef=1
+    if (( selectdef )); then
+      menu_select=$default
+      return 0
+    elif [[ -v "valid_opts[$selected]" ]]; then
+      menu_select=${opt_lookup[$selected]}
+      return 0
+    fi
+  done
+}
+
+############################################################
+### Function to try reading from info file
+############################################################
+function try_info {
+  local fcourse fproject argname argval
+  if [[ -e $infofile ]]; then
+    echo "Reading previous run info from $infofile"
+    exec 5<"$infofile"
+    read -u5 fcourse fproject
+    [[ -z $course ]] && course=$fcourse
+    [[ -z $project ]] && project=$fproject
+    while read -u5 argname argval; do
+      case "$argname" in
+        section)
+          (( ! specsect )) && sections+=( "$argval" )
+          ;;
+        user)
+          (( ! specuser )) && users+=( "$argval" )
+          ;;
+        sid)
+          (( ! specsid )) && sids+=( "$argval" )
+          ;;
+        names)
+          [[ -z $namesfile ]] && namesfile="$argval"
+          ;;
+      esac
+    done
+    exec 5<&-
+  fi
+  return 0
+}
+
+############################################################
+### Function to try saving to info file
+############################################################
+function save_info {
+  local name
+  if (( saveinfo )); then
+    echo "Saving course, project, sections, users, sids to $infofile"
+    exec 5>"$infofile"
+    echo "$course $project" >&5
+    for name in "${sections[@]}"; do
+      echo "section $name" >&5
+    done
+    for name in "${users[@]}"; do
+      echo "user $name" >&5
+    done
+    for name in "${sids[@]}"; do
+      echo "sid $name" >&5
+    done
+    if [[ -n $namesfile ]]; then
+      echo "names $namesfile" >&5
+    fi
+    exec 5>&-
+  fi
+  return 0
+}
+
+############################################################
+### Function to select course number
+############################################################
+function get_course {
+  local cnum
+  local ulfile="$tempfold/ulfile.json"
+  local -a cnums=()
+  if [[ -z $course ]]; then
+    echo "No course specified; looking up possible course numbers"
+    if (( historic )); then
+      api_request 'project/history' "$ulfile" -F "year=$year" -F "semester=$semester" -F "block=$block"
+    else
+      api_request users/list "$ulfile"
+    fi
+    exec 4< <(jq -r '[.[].course] | unique[]' <"$ulfile")
+    while read -u4 cnum; do
+      cnums+=( "$cnum" )
+    done
+    exec 4<&-
+    menu -p "Which course? " "${cnums[@]}"
+    course=$menu_select
+  fi
+  return 0
+}
+
+############################################################
+### Function to select project
+############################################################
+function get_project {
+  # sets global vars $project, $pavail and $tavail
+  local proj ptitle pclose this_tavail this_pavail anymatch
+  local plfile="$tempfold/plfile.json"
+  local -A projs=()
+  local -a plist=()
+  local -A pavail_lookup=()
+  local -A tavail_lookup=()
+  [[ -n $course ]] || emsg "get_project needs course"
+  if [[ -n $project ]]; then
+    echo "Looking up info for $course $project"
+    if (( historic )); then
+      api_request 'project/history' "$plfile" -F "course=$course" -F "project=$project" -F "year=$year" -F "semester=$semester" -F "block=$block"
+    else
+      api_request project/list "$plfile" -F "course=$course" -F "project=$project"
+    fi
+    exec 4< <(jq -r '.[] | [.project, .title, .close, (.testsavailable | tostring), (.pointsavailable | tostring)] | join(",")' <"$plfile")
+    anymatch=0
+    while IFS=, read -u4 proj ptitle pclose this_tavail this_pavail; do
+      if [[ $proj != $project ]]; then
+        emsg "project name mismatch in get_project"
+      fi
+      [[ -z $ptitle ]] && ptitle=$proj
+      echo
+      echo -e "  ${BLUE}Assignment: $ptitle$NC"
+      echo -e "  ${BLUE}Deadline: $pclose$NC"
+      echo
+      tavail=$this_tavail
+      pavail=$this_pavail
+      anymatch=1
+    done
+    if (( ! anymatch )); then
+      emsg "project '$project' not found for $course"
+    fi
+  else
+    echo "No project specified; looking up possible projects for $course"
+    if (( historic )); then
+      api_request 'project/history' "$plfile" -F "course=$course" -F "year=$year" -F "semester=$semester" -F "block=$block"
+    else
+      api_request project/list "$plfile" -F "course=$course"
+    fi
+    exec 4< <(jq -r '.[] | [.project, .title, .close, (.testsavailable | tostring), (.pointsavailable | tostring)] | join(",")' <"$plfile")
+    while IFS=, read -u4 proj ptitle pclose this_tavail this_pavail; do
+      [[ -z $ptitle ]] && ptitle=$proj
+      projs["$proj"]="($proj) $ptitle, due $pclose"
+      plist+=( "$proj" )
+      tavail_lookup["$proj"]=$this_tavail
+      pavail_lookup["$proj"]=$this_pavail
+    done
+    exec 4<&-
+    menu -p "Which assignment? " -f 'projs' "${plist[@]}"
+    project=$menu_select
+    tavail=${tavail_lookup["$project"]}
+    pavail=${pavail_lookup["$project"]}
+  fi
+  if [[ $tavail = 'null' || $pavail = 'null' ]]; then
+    tavail=0
+    pavail=0
+  fi
+  return 0
+}
+
+############################################################
+### Function to get all sids for the course/project
+############################################################
+# These are saved in a CSV file $sidfile with columns
+# 1 sid
+# 2 username
+# 3 datestamp
+# 4 points
+# 5 section
+# 6 name
+function get_all_sids {
+  declare -g sidfile="$tempfold/sidfile.csv"
+  local alpha info
+  local sublistfile="$tempfold/sublist.json"
+  local studentsfile="$tempfold/students.json"
+  local -A sinfo=()
+  [[ -n $course && -n $project ]] || emsg "get_all_sids needs course and project"
+  echo "Downloading info on project submissions..."
+  if (( historic )); then
+    api_request "submission/history" "$sublistfile" -F "course=$course" -F "project=$project" -F "year=$year" -F "semester=$semester" -F "block=$block"
+    api_request "users/history" "$studentsfile" -F "course=$course" -F "year=$year" -F "semester=$semester" -F "block=$block"
+  else
+    api_request "submission/list/$course/$project" "$sublistfile"
+    api_request "users/course/$course" "$studentsfile"
+  fi
+  exec 4< <(jq -r '.[] | [.alpha, .section, .alpha_name] | join(",")' <"$studentsfile")
+  while IFS=, read -u4 alpha info; do
+    sinfo["$alpha"]="$info"
+  done
+  exec 4<&-
+  exec 4< <(jq -r 'sort_by(.user, .datestamp) | reverse[] | [.user,.sid,.user,.datestamp,(.points // 0)] | join(",")' <"$sublistfile")
+  exec 5>"$sidfile"
+  while IFS=, read -u4 alpha info; do
+    if [[ -v "sinfo[$alpha]" ]]; then
+      echo "$info,${sinfo[$alpha]}" >&5
+    fi
+  done
+  exec 5>&-
+  exec 4<&-
+  return 0
+}
+
+############################################################
+### Function to filter $sidfile by section selections
+############################################################
+function select_sections {
+  local i item sid username date points secn name
+  local -a avail=()
+  local -A selected=()
+  local tfile="$tempfold/temp-sidfile.csv"
+  (( specsect || ${#sections[@]} )) || return 0
+
+  # prompt for unspecified ones
+  for (( i=0 ; i < asksect ; ++i )); do
+    exec 4< <(cut -d, -f5 "$sidfile" | sort -u)
+    while IFS='' read -u4 item; do
+      avail+=( "$item" )
+    done
+    menu -p "Which section? " "${avail[@]}"
+    sections+=( "$menu_select" )
+  done
+
+  # filter $sidfile by selected sections
+  for item in "${sections[@]}"; do
+    selected["$item"]=1
+  done
+
+  exec 4<"$sidfile"
+  exec 5>"$tfile"
+  while IFS=, read -u4 sid username date points secn name; do
+    if [[ -v "selected[$secn]" ]]; then
+      echo "$sid,$username,$date,$points,$secn,$name" >&5
+    fi
+  done
+  exec 5>&-
+  exec 4<&-
+  mv "$tfile" "$sidfile"
+
+  return 0
+}
+
+############################################################
+### Function to filter $sidfile by user selections
+############################################################
+function select_users {
+  local i item sid username date points secn name duser
+  local -A avail=()
+  local -A selected=()
+  local tfile="$tempfold/temp-sidfile.csv"
+  (( specuser )) || return 0
+
+  # prompt for unspecified ones
+  for (( i=0 ; i < askuser ; ++i )); do
+    exec 4< <(cut -d, -f2,5,6 "$sidfile" | sort -u)
+    while IFS=, read -u4 username secn name; do
+      duser="${nametrans[$username]-$username}"
+      avail["$username"]="[$duser] $name (section $secn)"
+    done
+    menu -p "Which user? " -f avail "${!avail[@]}"
+    users+=( "$menu_select" )
+  done
+
+  # filter $sidfile by selected sections
+  for item in "${users[@]}"; do
+    selected["$item"]=1
+  done
+
+  exec 4<"$sidfile"
+  exec 5>"$tfile"
+  while IFS=, read -u4 sid username date points secn name; do
+    if [[ -v "selected[$username]" ]]; then
+      echo "$sid,$username,$date,$points,$secn,$name" >&5
+    fi
+  done
+  exec 5>&-
+  exec 4<&-
+  mv "$tfile" "$sidfile"
+
+  return 0
+}
+
+############################################################
+### Function to filter $sidfile by sid selections (or latest)
+############################################################
+function select_sids {
+  local i item sid username date points secn name duser
+  local -A avail=()
+  local -A selected=()
+  local tfile="$tempfold/temp-sidfile.csv"
+  if (( specsid )); then
+    # prompt for unspecified ones
+    for (( i=0 ; i < asksid ; ++i )); do
+      exec 4<"$sidfile"
+      while IFS=, read -u4 sid username date points secn name; do
+        avail["$sid"]="[$sid] $name ($date)"
+      done
+      menu -p "Which sid? " -f avail "${!avail[@]}"
+      sids+=( "$menu_select" )
+    done
+
+    # filter $sidfile by selected sections
+    for item in "${sids[@]}"; do
+      selected["$item"]=1
+    done
+
+    exec 4<"$sidfile"
+    exec 5>"$tfile"
+    while IFS=, read -u4 sid username date points secn name; do
+      if [[ -v "selected[$sid]" ]]; then
+        echo "$sid,$username,$date,$points,$secn,$name" >&5
+      fi
+    done
+    exec 5>&-
+    exec 4<&-
+    mv "$tfile" "$sidfile"
+  else
+    # pick most recent from each username
+    exec 4<"$sidfile"
+    exec 5>"$tfile"
+    item=""
+    while IFS=, read -u4 sid username date points secn name; do
+      if [[ $username != $item ]]; then
+        echo "$sid,$username,$date,$points,$secn,$name" >&5
+        item=$username
+      fi
+    done
+    exec 5>&-
+    exec 4<&-
+    mv "$tfile" "$sidfile"
+  fi
+
+  return 0
+}
+
+############################################################
+### Helper function for pluralization
+############################################################
+function plural {
+  # usage: n word [pluralization]
+  # by default, puralization is adding s
+  if (( $1 == 1 )); then
+    echo "1 $2"
+  elif [[ $# -ge 3 ]]; then
+    echo "$1 $3"
+  else
+    echo "$1 $2s"
+  fi
+  return 0
+}
+
+############################################################
+### Function to download submission files
+############################################################
+function download_selected {
+  local count=$(wc -l <"$sidfile")
+  local clobber=0
+  local sid username date points secn name duser
+  local tarball="$tempfold/subm.tgz"
+  if (( count == 0 )); then
+    echo "No matching submissions found."
+    exit 2
+  fi
+
+  # count clobbered files and possibly give a warning
+  exec 4<"$sidfile"
+  while IFS=, read -u4 sid username date points secn name; do
+    duser="${nametrans[$username]-$username}"
+    [[ -e $duser ]] && clobber=$(( clobber + 1 ))
+  done
+  exec 4<&-
+
+  if (( count >= 5 || clobber >= 1 )); then
+    echo "About to extract $(plural $count folder)."
+    (( clobber > 0 )) && echo "This will clobber $(plural $clobber folder)."
+    yn=''
+    while [[ ${yn,,} != 'y' ]]; do
+      read -n1 -p "Are you sure? [y/n] " yn
+      echo
+      [[ ${yn,,} = n ]] && exit 2
+    done
+  fi
+
+  exec 4<"$sidfile"
+  exec 5>'results.csv'
+  echo "userid,section,date,name,TOTAL" >&5
+  while IFS=, read -u4 sid username date points secn name; do
+    duser="${nametrans[$username]-$username}"
+    echo "$duser,$secn,$date,$name,$points" >&5
+    echo -e "$duser\t<- [$date]\t[$points pts]\t$name (sec $secn)"
+    api_request "submission/pull/$course/$project" "$tarball" --nojq -F sid="$sid"
+    if [[ -e $duser ]]; then
+      echo "  (removing old $duser)"
+      rm -rf "$duser/"
+    fi
+    mkdir "$duser"
+    pushd "$duser" >/dev/null
+    tar -xzf "$tarball"
+    api_request 'results/list' '.full-test-results.json' -F "sid=$sid"
+    popd >/dev/null
+  done
+  exec 4<&-
+  exec 5>&-
+
+  return 0
+}
+
+############################################################
+### Function to extract test results
+############################################################
+# Creates a csv file results.csv with all test results,
+# and creates test-outputs subdirectories with stdout of
+# each test case
+function extract_testres {
+  echo "Creating results.csv and test-ouputs/ subdirectories..."
+  python3 <<'EOF'
+import json
+from pathlib import Path
+import pandas as pd
+from collections import defaultdict
+rescsv = Path('results.csv')
+table = pd.read_csv(rescsv.open())
+tcases = defaultdict(dict)
+for mid in table['userid']:
+    mfold = Path(mid)
+    tres = mfold / '.full-test-results.json'
+    if not tres.exists():
+        continue
+    try:
+        results = json.load(tres.open())
+    except json.JSONDecodeError:
+        continue
+    touts = mfold / 'test-outputs'
+    touts.mkdir()
+    for tresult in results:
+        try:
+            tname = tresult['rulename']
+        except KeyError:
+            continue
+        try:
+            earned = tresult['points'] * tresult['pass']
+        except KeyError | ValueError:
+            earned = 0
+        tcases[tname][mid] = earned
+        try:
+            output = tresult['stdout']
+        except KeyError:
+            continue
+        with (touts / f"{tname}.txt").open('w') as fout:
+            print(output.rstrip(), file=fout)
+for tname in sorted(tcases):
+    table = table.merge(
+        right=pd.Series(tcases[tname], name=tname),
+        how='left', left_on='userid', right_index=True)
+    table[tname].fillna(0)
+table.sort_values(by=['section', 'date'], inplace=True)
+with rescsv.open('w') as fout:
+    table.to_csv(fout, index=False)
+EOF
+}
+
+############################################################
+### Function to download test results
+############################################################
+# TODO re-use possibly to include autotest results in each folder
+function dl_testres {
+  # saves results to file $testres_file and sets $points_earned
+  # also updates $user and $udisp
+  local -A testsgot=()
+  local name points pass xuname uname=''
+  declare -g testres_file="$tempfold/testres.json"
+  [[ -n $sid || -n $tavail || -n $pavail ]] || emsg "dl_testres needs sid and tavail"
+  declare -g points_earned=0
+  if [[ $tavail -eq 0 ]]; then
+    echo "No test cases for this assignment."
+    testres_file='/dev/null'
+    return 0
+  fi
+  echo
+  echo "Fetching autotest results for $course $project SID $sid"
+  while (( 1 )); do
+    api_request 'results/list' "$testres_file" -F "sid=$sid"
+    exec 4< <(jq -r '.[] | [.user, .rulename, (.points|tostring), (.pass|tostring)] | join(",")' <"$testres_file")
+    while IFS=, read -u4 xuname name points pass; do
+      [[ -z $uname ]] && uname=$xuname
+      [[ -v "testsgot[$name]" ]] && continue
+      testsgot["$name"]=1
+      if (( pass )); then
+        echo -e "  ${GREEN}$name: pass ($(plural $points point))$NC"
+        points_earned=$(( points_earned + points ))
+      else
+        echo -e "  ${RED}$name: FAIL ($(plural $points point))$NC"
+      fi
+    done
+    exec 4<&-
+    [[ ${#testsgot[@]} -ge $tavail ]] && break
+    echo -n "(waiting for all the tests to run...)"
+    spin "$poll_interval"
+    echo -ne "\r                                 \r"
+  done
+  if [[ -n $uname ]]; then
+    user=$uname
+    udisp=${nametrans["$user"]:-$user}
+  fi
+  echo -e "${BLUE}Total points earned: $points_earned / $pavail$NC"
+  return 0
+}
+
+############################################################
+### Helper function to print a header line
+############################################################
+function header {
+  # usage: header COLS TEXT
+  local cols=$1 message lwid rwid
+  shift
+  message=$*
+  if (( ${#message} > cols - 4 )); then
+    echo -e "${BLUE}==${message:0:$(( cols - 4 ))}==$NC"
+  else
+    lwid=$(( ( cols - ${#message} ) / 2 ))
+    rwid=$(( cols - ${#message} - lwid ))
+    echo -e "${BLUE}$(head -c "$lwid" </dev/zero | tr '\0' '=')$message$(head -c "$rwid" </dev/zero | tr '\0' '=')$NC"
+  fi
+  return 0
+}
+
+############################################################
+### This is "main" - do the actual stuff
+############################################################
+if (( refresh )); then
+  maybe_update
+fi
+get_api_key
+try_info
+read_namesfile
+get_course
+get_project
+get_all_sids
+select_sections
+select_users
+select_sids
+download_selected
+extract_testres
+save_info
+echo "Goodbye!"
+
+:
