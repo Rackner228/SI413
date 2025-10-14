@@ -22,10 +22,7 @@ public class Interpreter {
      * in each function. (This is a consequence of Java generics.)
      */
     private class StatementVisitor extends ParseRulesBaseVisitor<Void> {
-        public Void visitRegularProg(ParseRules.RegularProgContext ctx) {
-            for (int i = 0; i < ctx.stat().size(); i++) {
-                visit(ctx.stat(i));
-            }
+        public Void visitRegularProg() {
             return null;
         }
 
@@ -99,11 +96,12 @@ public class Interpreter {
                 }
             }
             else if (op.equals("|")){
-                if((!right.equals("0") && right.length() > 0) || (!left.equals("0") && left.length() > 0)) {
-                    return "1";
+                // Treat both as false ONLY if both are literally "0" or empty
+                if((right.equals("0") || right.length() == 0) && (left.equals("0") || left.length() == 0)) {
+                    return "0";
                 }
                 else {
-                    return "0";
+                    return "1";
                 }
             }
             else if (op.equals("?")) {
