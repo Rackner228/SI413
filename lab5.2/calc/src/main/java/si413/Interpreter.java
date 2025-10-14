@@ -129,6 +129,7 @@ public class Interpreter {
         }
 
         public String visitRevExpr(ParseRules.RevExprContext ctx) {
+            String word = visit(ctx.expr());
             if (word.equals("0")) {
                 return "1";
             } 
@@ -136,7 +137,6 @@ public class Interpreter {
                 return "0";
             }
 
-            String word = visit(ctx.expr());
             char ch;
             String r = ""; // String that will store the rez`verse
             for (int i = 0; i < word.length(); i++) {
