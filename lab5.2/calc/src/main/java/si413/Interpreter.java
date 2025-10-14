@@ -22,7 +22,10 @@ public class Interpreter {
      * in each function. (This is a consequence of Java generics.)
      */
     private class StatementVisitor extends ParseRulesBaseVisitor<Void> {
-        public Void visitRegularProg() {
+        public Void visitRegularProg(ParseRules.RegularProgContext ctx) {
+            for (int i = 0; i < ctx.stat().size(); i++) {
+                visit(ctx.stat(i));
+            }
             return null;
         }
 
@@ -72,7 +75,7 @@ public class Interpreter {
                 return combined;
             }
             else if (op.equals(">")){
-                if (left.compareTo(right) < 0) {
+                if (left.compareTo(right) > 0) {
                     return "1";
                 }
                 else {
@@ -80,7 +83,7 @@ public class Interpreter {
                 }
             }
             else if (op.equals("<")){
-                if (left.compareTo(right) > 0){
+                if (left.compareTo(right) < 0){
                     return "1";
                 }
                 else {
@@ -88,7 +91,7 @@ public class Interpreter {
                 }
             }
             else if (op.equals("&")){
-                if(left.equals("1") && right.equals("1")) {
+                if((!right.equals("0") && right.length() > 0) && (!left.equals("0") && left.length() > 0)) {
                     return "1";
                 }
                 else {
@@ -96,7 +99,7 @@ public class Interpreter {
                 }
             }
             else if (op.equals("|")){
-                if(left.equals("1") || right.equals("1")) {
+                if((!right.equals("0") && right.length() > 0) || (!left.equals("0") && left.length() > 0)) {
                     return "1";
                 }
                 else {
@@ -145,7 +148,7 @@ public class Interpreter {
                 return variables_stored.get(varName);
             } 
             else {
-                System.out.println("Variable is not defined");
+                System.exit(7);
                 return null;
             }
         }
