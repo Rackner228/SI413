@@ -96,12 +96,11 @@ public class Interpreter {
                 }
             }
             else if (op.equals("|")){
-                // Treat both as false ONLY if both are literally "0" or empty
-                if((right.equals("0") || right.length() == 0) && (left.equals("0") || left.length() == 0)) {
-                    return "0";
+                if((!right.equals("0") && right.length() > 0) || (!left.equals("0") && left.length() > 0)) {
+                    return "1";
                 }
                 else {
-                    return "1";
+                    return "0";
                 }
             }
             else if (op.equals("?")) {
@@ -130,6 +129,13 @@ public class Interpreter {
         }
 
         public String visitRevExpr(ParseRules.RevExprContext ctx) {
+            if (word.equals("0")) {
+                return "1";
+            } 
+            else if (word.equals("1")) {
+                return "0";
+            }
+
             String word = visit(ctx.expr());
             char ch;
             String r = ""; // String that will store the rez`verse
